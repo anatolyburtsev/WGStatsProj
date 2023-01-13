@@ -7,3 +7,9 @@ PR/FAQ
 High Level Design Doc
 
 ML Model notebook 
+
+# Commands
+### Deploy functions
+```shell
+firebase deploy --only functions
+```
