@@ -3,18 +3,26 @@ import {Buffer} from "node:buffer";
 import {onMessagePublished} from "firebase-functions/v2/pubsub";
 import {logger} from "firebase-functions/v2";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {consumerFn} from "./consumer";
+import {PUBSUB_TOPICS, STEP} from "./constants";
+import {defineInt} from "firebase-functions/params";
 
-const start = 10000;
-const end = 10401;
-const step = 100;
+const pubsubTopicClient = new PubSub().topic(PUBSUB_TOPICS.FIND_ALIVE_USERS);
 
-const PUBSUB_TOPIC_NAME = "first-topic";
-const pubsubTopicClient = new PubSub().topic(PUBSUB_TOPIC_NAME);
+// const getEnvVarOrThrow = (varName: string): string => {
+//   const value = process.env[varName];
+//   if (!value) {
+//     throw new Error(`Missing env var ${varName}`);
+//   }
+//   return value;
+// };
 
 // scheduled function run monthly
 exports.producer = onSchedule("0 0 1 * *", async (event: any) => {
   const startIds: number[] = [];
-  for (let i = start; i < end; i += step) {
+  const startAccountId = defineInt("START_ACCOUNT_ID").value();
+  const endAccountId = defineInt("END_ACCOUNT_ID").value();
+  for (let i = startAccountId; i < endAccountId; i += STEP) {
     startIds.push(i);
   }
 
@@ -32,12 +40,8 @@ exports.producer = onSchedule("0 0 1 * *", async (event: any) => {
   logger.info(`Successfully pushed ${publishPromises.length} messages`);
 });
 
-exports.worker = onMessagePublished(PUBSUB_TOPIC_NAME, (event: any) => {
-  const message = event.data.message;
-  const messageBody = Buffer.from(message.data, "base64").toString();
-  const jsonBody = JSON.parse(messageBody);
-  const startId = jsonBody.startId;
-  logger.info("Hello from worker");
-  logger.info(jsonBody);
-  logger.info(startId);
-});
+
+exports.consumer = onMessagePublished({
+  topic: PUBSUB_TOPICS.FIND_ALIVE_USERS,
+  maxInstances: 10
+}, consumerFn);
