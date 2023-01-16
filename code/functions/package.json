@@ -19,6 +19,7 @@
     "@google-cloud/pubsub": "^3.2.1",
     "@google-cloud/secret-manager": "^4.2.0",
     "axios": "^1.2.2",
+    "firebase": "^9.15.0",
     "firebase-admin": "^10.0.2",
     "firebase-functions": "^4.1.1"
   },

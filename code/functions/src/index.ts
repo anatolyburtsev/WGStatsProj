@@ -43,5 +43,9 @@ exports.producer = onSchedule("0 0 1 * *", async (event: any) => {
 
 exports.consumer = onMessagePublished({
   topic: PUBSUB_TOPICS.FIND_ALIVE_USERS,
-  maxInstances: 10
+  // maxInstances: 3,
+  // memory: "256MiB",
+  // concurrency: 1,
+  retry: true,
+  // cpu: 1,
 }, consumerFn);
