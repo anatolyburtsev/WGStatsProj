@@ -2,37 +2,20 @@ import {Buffer} from "node:buffer";
 import {logger} from "firebase-functions/v2";
 import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 import axios from "axios";
-import {STEP} from "./constants";
+import {firebaseConfigSecretVersionId, STEP} from "./constants";
 
 import {initializeApp} from "firebase/app";
 import {
   getFirestore,
-  addDoc,
-  collection,
+  setDoc,
+  doc,
 } from "firebase/firestore/lite";
 
-
-const secretVersionId = "projects/202233908638/secrets/hellosecret/versions/2";
+const applicationIdsSecretVersionId = "projects/202233908638/secrets/hellosecret/versions/2";
 const secretClient = new SecretManagerServiceClient();
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAKRjYd_oGwH8O6vfJyZGnwLC-EWA9Yies",
-  authDomain: "wgstatsproj.firebaseapp.com",
-  databaseURL: "https://wgstatsproj-default-rtdb.firebaseio.com",
-  projectId: "wgstatsproj",
-  storageBucket: "wgstatsproj.appspot.com",
-  messagingSenderId: "202233908638",
-  appId: "1:202233908638:web:6145e184cf6d596ff85a8f",
-  measurementId: "G-75P2QYLWJD",
-};
-
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const firestore = getFirestore(app);
-
 const getApplicationId = async (): Promise<string> => {
-  const [version] = await secretClient.accessSecretVersion({name: secretVersionId});
+  const [version] = await secretClient.accessSecretVersion({name: applicationIdsSecretVersionId});
   const content = version?.payload?.data?.toString();
   if (content === undefined) {
     logger.error("Failed to get application id from secret manager");
@@ -44,11 +27,18 @@ const getApplicationId = async (): Promise<string> => {
 };
 
 export const consumerFn = async (event: any) => {
+  const [firebaseConfigVersion] = await secretClient.accessSecretVersion({name: firebaseConfigSecretVersionId});
+  const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "")
+  logger.debug(`firebase config: ${JSON.stringify(firebaseConfig)}`)
+  const app = initializeApp(firebaseConfig, "consumer");
+  const firestore = getFirestore(app);
+
   const message = event.data.message;
   const messageBody = Buffer.from(message.data, "base64").toString();
   logger.debug("Message received: ", messageBody);
   const jsonBody = JSON.parse(messageBody);
   const startId = parseInt(jsonBody.startId);
+  const date = jsonBody.date;
 
   const accountIdList = [];
   for (let i = 0; i < STEP; i++) {
@@ -62,8 +52,6 @@ export const consumerFn = async (event: any) => {
   const requestUrl = `${apiEndpoint}?application_id=${applicationId}&account_id=${accountIds}`;
 
   const response = await axios.get(requestUrl);
-  // logger.info("response");
-  // logger.info(response);
   const data = response.data;
   if (data.status !== "ok") {
     if (data.status === "error") {
@@ -80,15 +68,15 @@ export const consumerFn = async (event: any) => {
     .filter(([key, value]) => value !== null);
 
   const storeDataPromises = validAccountsData.map(([accountId, accountData]) => {
-    return addDoc(collection(firestore, "accounts"), {
+    const ref = doc(firestore, "date", date, "accounts", accountId);
+    return setDoc( ref, {
       accountId: parseInt(accountId),
       accountInfo: accountData,
-    });
+    }
+    );
   });
-
   await Promise.all(storeDataPromises);
 
   logger.info(`startId: ${startId}, applicationId: ${applicationId}, 
   Processed ${validAccountsData.length} valid accounts`);
-  // logger.info(validAccountsData);
 };

@@ -29,5 +29,8 @@ module.exports = {
     "import/no-unresolved": 0,
     "max-len": ["error", {"code": 120}],
     "indent": ["error", 2],
+    "semi": "warn",
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "@typescript-eslint/no-var-requires": "warn",
   },
 };
