@@ -1,38 +1,14 @@
 import {Buffer} from "node:buffer";
 import {logger} from "firebase-functions/v2";
-import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 import axios from "axios";
-import {firebaseConfigSecretVersionId, STEP} from "./constants";
+import {STEP} from "../constants";
 
-import {initializeApp} from "firebase/app";
 import {
-  getFirestore,
   setDoc,
   doc,
-  Firestore
 } from "firebase/firestore";
+import {getApplicationId, getFirestoreDB} from "../utils";
 
-const applicationIdsSecretVersionId = "projects/202233908638/secrets/hellosecret/versions/2";
-const secretClient = new SecretManagerServiceClient();
-
-const getApplicationId = async (): Promise<string> => {
-  const [version] = await secretClient.accessSecretVersion({name: applicationIdsSecretVersionId});
-  const content = version?.payload?.data?.toString();
-  if (content === undefined) {
-    logger.error("Failed to get application id from secret manager");
-    logger.error(version);
-    throw new Error("Secret invalid format");
-  }
-  const keys: string[] = <string[]>JSON.parse(content);
-  return keys[Math.floor(Math.random() * keys.length)];
-};
-
-export const getFirestoreDB = async (): Promise<Firestore> => {
-  const [firebaseConfigVersion] = await secretClient.accessSecretVersion({name: firebaseConfigSecretVersionId});
-  const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "");
-  const app = initializeApp(firebaseConfig, "consumer");
-  return getFirestore(app);
-};
 
 export const consumerFn = async (event: any) => {
   const db = await getFirestoreDB();

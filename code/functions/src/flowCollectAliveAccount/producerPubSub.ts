@@ -1,5 +1,5 @@
 import {defineInt} from "firebase-functions/params";
-import {CHUNK_SIZE, PUBSUB_TOPICS, STEP} from "./constants";
+import {CHUNK_SIZE, PUBSUB_TOPICS, STEP} from "../constants";
 import {Buffer} from "node:buffer";
 import {logger} from "firebase-functions/v2";
 import {PubSub} from "@google-cloud/pubsub";

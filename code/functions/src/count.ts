@@ -1,7 +1,7 @@
 import {getCountFromServer, collection} from "firebase/firestore";
 
-import {getFirestoreDB} from "./consumer";
 import {logger} from "firebase-functions/v2";
+import {getFirestoreDB} from "./utils";
 
 /**
  * function gets http request with firestore collection name and collects number of elements in collection
