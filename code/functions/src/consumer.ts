@@ -9,7 +9,8 @@ import {
   getFirestore,
   setDoc,
   doc,
-} from "firebase/firestore/lite";
+  Firestore
+} from "firebase/firestore";
 
 const applicationIdsSecretVersionId = "projects/202233908638/secrets/hellosecret/versions/2";
 const secretClient = new SecretManagerServiceClient();
@@ -26,13 +27,15 @@ const getApplicationId = async (): Promise<string> => {
   return keys[Math.floor(Math.random() * keys.length)];
 };
 
-export const consumerFn = async (event: any) => {
+export const getFirestoreDB = async (): Promise<Firestore> => {
   const [firebaseConfigVersion] = await secretClient.accessSecretVersion({name: firebaseConfigSecretVersionId});
-  const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "")
-  logger.debug(`firebase config: ${JSON.stringify(firebaseConfig)}`)
+  const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "");
   const app = initializeApp(firebaseConfig, "consumer");
-  const firestore = getFirestore(app);
+  return getFirestore(app);
+};
 
+export const consumerFn = async (event: any) => {
+  const db = await getFirestoreDB();
   const message = event.data.message;
   const messageBody = Buffer.from(message.data, "base64").toString();
   logger.debug("Message received: ", messageBody);
@@ -68,7 +71,7 @@ export const consumerFn = async (event: any) => {
     .filter(([key, value]) => value !== null);
 
   const storeDataPromises = validAccountsData.map(([accountId, accountData]) => {
-    const ref = doc(firestore, "date", date, "accounts", accountId);
+    const ref = doc(db, "date", date, "accounts", accountId);
     return setDoc( ref, {
       accountId: parseInt(accountId),
       accountInfo: accountData,

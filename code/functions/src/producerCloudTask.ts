@@ -10,10 +10,10 @@ import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 const initQueue = async () => {
   const secretClient = new SecretManagerServiceClient();
   const [firebaseConfigVersion] = await secretClient.accessSecretVersion({name: firebaseConfigSecretVersionId});
-  const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "")
+  const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "");
   const app = initializeApp(firebaseConfig, "producerTask");
   return getFunctions(app).taskQueue("consumer2cloudtask");
-}
+};
 
 export const producerCloudTaskFn = async (event: any) => {
   const queue = await initQueue();
@@ -24,11 +24,11 @@ export const producerCloudTaskFn = async (event: any) => {
   const date = new Date().toISOString().split("T")[0];
   const startIds: number[] = [];
   for (let chunkNumber = 0; chunkNumber <= (endAccountId - startAccountId) / STEP / CHUNK_SIZE; chunkNumber++) {
-    startIds.length = 0
+    startIds.length = 0;
     for (let i = 0; i < CHUNK_SIZE; i += 1) {
       startIds.push(startAccountId + i * STEP + chunkNumber * STEP * CHUNK_SIZE);
     }
-    logger.debug(`pushing following ids: ${JSON.stringify(startIds)}`)
+    logger.debug(`pushing following ids: ${JSON.stringify(startIds)}`);
     const messagesPromises = startIds
       .map((id) => ({startId: id, date}))
       .map((messageBody) => Buffer.from(JSON.stringify(messageBody)))

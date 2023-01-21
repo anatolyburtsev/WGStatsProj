@@ -32,5 +32,7 @@ module.exports = {
     "semi": "warn",
     "@typescript-eslint/ban-ts-comment": "warn",
     "@typescript-eslint/no-var-requires": "warn",
+    "valid-jsdoc": "warn",
+    "comma-dangle": "warn"
   },
 };

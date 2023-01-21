@@ -5,6 +5,8 @@ import {PUBSUB_TOPICS} from "./constants";
 import {onTaskDispatched} from "firebase-functions/v2/tasks";
 import {producerPubSubFn} from "./producerPubSub";
 import {producerCloudTaskFn} from "./producerCloudTask";
+import {onRequest} from "firebase-functions/v2/https";
+import {getNumberOfElements} from "./count";
 
 
 // scheduled function run monthly
@@ -34,3 +36,9 @@ exports.consumer2cloudtask = onTaskDispatched({
 exports.consumer = onMessagePublished({
   topic: PUBSUB_TOPICS.FIND_ALIVE_USERS,
 }, consumerFn);
+
+exports.countfunc = onRequest({}, (req, res) => {
+  const {collectionName} = req.body;
+  const size = getNumberOfElements(collectionName);
+  res.status(200).json({...size});
+});
