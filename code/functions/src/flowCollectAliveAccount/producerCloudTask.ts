@@ -6,8 +6,8 @@ import {getFunctionUrl, initTaskQueue} from "../utils";
 
 
 export const producerCloudTaskFn = async (event: any) => {
-  const queue = await initTaskQueue("consumer2cloudtask");
-  const targetURI = await getFunctionUrl("consumer2cloudtask");
+  const queue = await initTaskQueue("consumerflow1");
+  const targetURI = await getFunctionUrl("consumerflow1");
 
   const startAccountId = defineInt("START_ACCOUNT_ID").value();
   const endAccountId = defineInt("END_ACCOUNT_ID").value();

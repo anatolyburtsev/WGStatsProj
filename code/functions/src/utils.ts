@@ -1,10 +1,13 @@
 import {SecretManagerServiceClient} from "@google-cloud/secret-manager";
 import {logger} from "firebase-functions/v2";
-import {Firestore, getFirestore} from "firebase/firestore";
 import {initializeApp} from "firebase/app";
+import {initializeApp as initializeAppAdmin} from "firebase-admin/app";
 import {applicationIdsSecretVersionId, firebaseConfigSecretVersionId} from "./constants";
 import {GoogleAuth} from "google-auth-library";
 import {getFunctions} from "firebase-admin/functions";
+import {Buffer} from "node:buffer";
+import axios from "axios";
+import {getFirestore, Firestore} from "firebase/firestore";
 
 const secretClient = new SecretManagerServiceClient();
 
@@ -27,6 +30,13 @@ export const getFirestoreDB = async (): Promise<Firestore> => {
   return getFirestore(app);
 };
 
+export const parseMessage = <T>(event: any): T => {
+  const message = event.data.message;
+  const messageBody = Buffer.from(message.data, "base64").toString();
+  logger.debug("Message received: ", messageBody);
+  const jsonBody = JSON.parse(messageBody);
+  return jsonBody as T;
+};
 
 /**
  * Get the URL of a given v2 cloud function.
@@ -58,8 +68,23 @@ export const initTaskQueue = async (queueName: string) => {
   const secretClient = new SecretManagerServiceClient();
   const [firebaseConfigVersion] = await secretClient.accessSecretVersion({name: firebaseConfigSecretVersionId});
   const firebaseConfig = JSON.parse(firebaseConfigVersion?.payload?.data?.toString() || "");
-  const app = initializeApp(firebaseConfig, "producerTask");
+  const app = initializeAppAdmin(firebaseConfig, "producerTask");
   return getFunctions(app).taskQueue(queueName);
 };
 
-
+export const sendRequest = async (url: string) => {
+  const response = await axios.get(url);
+  const data = response.data;
+  if (data.status !== "ok") {
+    if (data.status === "error") {
+      logger.error(`Error in API request: ${data.error.message} to ${url}`);
+      logger.error(data);
+      throw new Error(data.error.message);
+    } else {
+      logger.error(`Unknown problem with API request to ${url}`);
+      logger.error(data);
+      throw new Error("Failed to get account info");
+    }
+  }
+  return data;
+};

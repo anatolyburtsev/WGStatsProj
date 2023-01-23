@@ -1,23 +1,22 @@
-import {Buffer} from "node:buffer";
 import {logger} from "firebase-functions/v2";
-import axios from "axios";
 import {STEP} from "../constants";
 
 import {
   setDoc,
   doc,
 } from "firebase/firestore";
-import {getApplicationId, getFirestoreDB} from "../utils";
+import {getApplicationId, getFirestoreDB, parseMessage, sendRequest} from "../utils";
 
+type flow1Message = {
+  startId: string,
+  date: string
+}
 
 export const consumerFn = async (event: any) => {
   const db = await getFirestoreDB();
-  const message = event.data.message;
-  const messageBody = Buffer.from(message.data, "base64").toString();
-  logger.debug("Message received: ", messageBody);
-  const jsonBody = JSON.parse(messageBody);
-  const startId = parseInt(jsonBody.startId);
-  const date = jsonBody.date;
+  const message = parseMessage<flow1Message>(event);
+  const startId = parseInt(message.startId);
+  const date = message.date;
 
   const accountIdList = [];
   for (let i = 0; i < STEP; i++) {
@@ -29,19 +28,7 @@ export const consumerFn = async (event: any) => {
   logger.info(`startId: ${startId}, applicationId: ${applicationId}, Start`);
   const apiEndpoint = "https://api.wotblitz.com/wotb/account/info/";
   const requestUrl = `${apiEndpoint}?application_id=${applicationId}&account_id=${accountIds}`;
-
-  const response = await axios.get(requestUrl);
-  const data = response.data;
-  if (data.status !== "ok") {
-    if (data.status === "error") {
-      logger.error(`Error in API request: ${data.error.message}`);
-      throw new Error(data.error.message);
-    } else {
-      logger.error(`Failed to get account info for ${startId}`);
-      logger.error(data);
-      throw new Error("Failed to get account info");
-    }
-  }
+  const data = await sendRequest(requestUrl);
 
   const validAccountsData = Object.entries(data.data)
     .filter(([key, value]) => value !== null);

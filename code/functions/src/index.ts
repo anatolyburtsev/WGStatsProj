@@ -7,6 +7,8 @@ import {getNumberOfElements} from "./count";
 import {consumerFn} from "./flowCollectAliveAccount/consumer";
 import {producerCloudTaskFn} from "./flowCollectAliveAccount/producerCloudTask";
 import {producerPubSubFn} from "./flowCollectAliveAccount/producerPubSub";
+import {consumerFlow2} from "./flowCollectDetailedData/consumer";
+import {producerFlow2} from "./flowCollectDetailedData/producer";
 
 
 // scheduled function run monthly
@@ -22,8 +24,13 @@ exports.producercloudtask = onSchedule({
   memory: "2GiB",
 }, producerCloudTaskFn);
 
+exports.producercloudtaskflow2 = onSchedule({
+  schedule: "0 0 3 * *",
+  timeoutSeconds: 1800,
+  memory: "2GiB",
+}, producerFlow2);
 
-exports.consumer2cloudtask = onTaskDispatched({
+exports.consumerflow1 = onTaskDispatched({
   retryConfig: {
     maxAttempts: 5,
     minBackoffSeconds: 60,
@@ -32,6 +39,17 @@ exports.consumer2cloudtask = onTaskDispatched({
     maxConcurrentDispatches: 6,
   },
 }, consumerFn);
+
+exports.consumerflow2 = onTaskDispatched({
+  retryConfig: {
+    maxAttempts: 5,
+    minBackoffSeconds: 60,
+  },
+  rateLimits: {
+    maxConcurrentDispatches: 18,
+  },
+}, consumerFlow2);
+
 
 exports.consumer = onMessagePublished({
   topic: PUBSUB_TOPICS.FIND_ALIVE_USERS,
