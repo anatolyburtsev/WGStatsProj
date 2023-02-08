@@ -22,15 +22,15 @@ export const consumerFlow2 = async (event: any) => {
 
   const response = await sendRequest(requestUrl);
   const data = response.data[accountId];
-  logger.debug(`Got response: ${JSON.stringify(data)}`)
+  logger.debug(`Got response: ${JSON.stringify(data)}`);
 
 
-  const docPath = `date/${date}/account/${accountId}`;
+  const docPath = `date/${date}/accounts/${accountId}`;
   logger.debug(`docPath: ${docPath}`);
   const docRef = doc(db, docPath);
-  logger.debug("store doc to db")
+  logger.debug("store doc to db");
   await setDoc(docRef, {
-    tanksStats: data
+    tanksStats: data,
   }, {merge: true});
 
   logger.debug(`Processed account: ${accountId}, date: ${date}`);

@@ -1,13 +1,13 @@
 import {defineInt} from "firebase-functions/params";
-import {CHUNK_SIZE, STEP} from "../constants";
+import {CHUNK_SIZE, CLOUD_TASK_QUEUES, STEP} from "../constants";
 import {Buffer} from "node:buffer";
 import {logger} from "firebase-functions/v2";
 import {getFunctionUrl, initTaskQueue} from "../utils";
 
 
 export const producerCloudTaskFn = async (event: any) => {
-  const queue = await initTaskQueue("consumerflow1");
-  const targetURI = await getFunctionUrl("consumerflow1");
+  const queue = await initTaskQueue(CLOUD_TASK_QUEUES.FIND_ALIVE_USERS);
+  const targetURI = await getFunctionUrl(CLOUD_TASK_QUEUES.FIND_ALIVE_USERS);
 
   const startAccountId = defineInt("START_ACCOUNT_ID").value();
   const endAccountId = defineInt("END_ACCOUNT_ID").value();

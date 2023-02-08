@@ -26,7 +26,7 @@ export const producerFlow2 = async (event: any) => {
       break;
     }
     const batchData = batch.docs
-      .map((doc) => doc.data())
+      .map((doc) => doc.data());
 
     const messagePromises = batchData
       .filter((doc) => doc.accountInfo.statistics.all.battles > 1000)
@@ -39,7 +39,7 @@ export const producerFlow2 = async (event: any) => {
 
     await Promise.all(messagePromises);
 
-    totalMessageCount += messagePromises.length
+    totalMessageCount += messagePromises.length;
     logger.debug(`iteration: ${i}. Published ${messagePromises.length} messages in this batch. 
     Total: ${totalMessageCount}`);
 
