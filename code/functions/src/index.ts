@@ -5,6 +5,9 @@ import {onTaskDispatched} from "firebase-functions/v2/tasks";
 import {consumerFn} from "./flowCollectAliveAccount/consumer";
 import {producerCloudTaskFn} from "./flowCollectAliveAccount/producerCloudTask";
 import {producerPubSubFn} from "./flowCollectAliveAccount/producerPubSub";
+import {onRequest} from "firebase-functions/v2/https";
+import {exportFirestoreCollection} from "./utilityFunctions/exportData";
+import {simpleCloudTask, simpleProducer} from "./simpleCloudTask";
 
 
 // Producer pubsub
@@ -37,6 +40,8 @@ exports.consumerflow1cloudtask = onTaskDispatched({
   },
 }, consumerFn);
 
+exports.simpleproducer = simpleProducer
+exports.simplecloudtask = simpleCloudTask
 
 // exports.producercloudtaskflow2 = onSchedule({
 //   schedule: "0 0 3 * *",
@@ -60,3 +65,11 @@ exports.consumerflow1cloudtask = onTaskDispatched({
 //   const size = getNumberOfElements(collectionName);
 //   res.status(200).json({...size});
 // });
+
+exports.exportfunc = onRequest({
+  timeoutSeconds: 1800,
+}, async (req, res) => {
+  const {collectionName, bucketName} = req.body;
+  const response = await exportFirestoreCollection(collectionName, bucketName);
+  res.status(200).json({...response});
+});

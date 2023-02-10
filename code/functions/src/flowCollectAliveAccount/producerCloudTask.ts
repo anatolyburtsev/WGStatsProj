@@ -9,8 +9,8 @@ export const producerCloudTaskFn = async (event: any) => {
   const queue = await initTaskQueue(CLOUD_TASK_QUEUES.FIND_ALIVE_USERS);
   const targetURI = await getFunctionUrl(CLOUD_TASK_QUEUES.FIND_ALIVE_USERS);
 
-  const startAccountId = defineInt("START_ACCOUNT_ID").value();
-  const endAccountId = defineInt("END_ACCOUNT_ID").value();
+  const startAccountId = defineInt("DEFAULT_START_ACCOUNT_ID").value();
+  const endAccountId = defineInt("DEFAULT_END_ACCOUNT_ID").value();
   const date = new Date().toISOString().split("T")[0];
   const startIds: number[] = [];
   for (let chunkNumber = 0; chunkNumber <= (endAccountId - startAccountId) / STEP / CHUNK_SIZE; chunkNumber++) {
@@ -22,6 +22,7 @@ export const producerCloudTaskFn = async (event: any) => {
     const messagesPromises = startIds
       .map((id) => ({startId: id, date}))
       .map((messageBody) => Buffer.from(JSON.stringify(messageBody)))
+      // enqueue task to CloudTaskQueue
       .map((message) => queue.enqueue({message}, {uri: targetURI}));
 
     await Promise.all(messagesPromises);
